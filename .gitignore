@@ -1,0 +1,18 @@
+# Archivos compilados (la basura que genera Java al funcionar)
+/build/
+/dist/
+*.class
+
+# Configuraciones privadas de NetBeans (solo sirven para tu PC)
+/nbproject/private/
+
+# Archivos temporales del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de compilacion de maven
+/target/
+target/
+**/target/
+*.log
+.idea/
