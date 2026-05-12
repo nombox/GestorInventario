@@ -15,8 +15,12 @@ public class App {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        InterfazVisual gestorInventario = new InterfazVisual();
-        gestorInventario.crearEntorno();
+      /*  InterfazVisual gestorInventario = new InterfazVisual();
+        gestorInventario.crearEntorno();*/
+      
+      ProductoDAO operaciones = new ProductoDAO();
+      operaciones.obtenerConexion();
+      operaciones.registrarProducto("Laptop Canaima", 12, 20, "Laptop China del gobierno de Venezuela");
     }
     
 }

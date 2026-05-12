@@ -10,7 +10,6 @@
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <version>9.7.0</version>
-            <type>pom.sha256</type>
         </dependency>
     </dependencies>
     <properties>
