@@ -56,6 +56,7 @@ public class ProductoDAO {
     //Debe ser booleano para verificar si se guardó o no correctamente
     public boolean registrarProducto(String nombre, int cantidad, double precio, String descripcion) {
         //Se hace la sentencia sql de inserción y se colocan "?" por motivos de seguridad.
+        //Como se menciona en la guia en la parte 3.1
         String sql = "INSERT INTO productos (Nombre, Cantidad, Precio, Descripcion) VALUES (?, ?, ?, ?)";
 
         //Metemos todo en un try with resources, abrimos la conexión y preparamos el statement.

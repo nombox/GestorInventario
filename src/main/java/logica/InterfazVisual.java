@@ -6,6 +6,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
@@ -52,25 +54,32 @@ public class InterfazVisual {
         this.panelTabla = new JPanel();
         this.panelDatos = new JPanel();
         this.panelBotones = new JPanel();
-        
+
         this.botonRegistrar = new JButton("Registrar");
         this.botonActualizar = new JButton("Actualizar");
         this.botonBorrar = new JButton("Borrar");
         this.botonLimpiar = new JButton("Limpiar registros");
-        
+
         this.campoNombre = new JTextField();
         this.campoCantidad = new JTextField();
         this.campoPrecio = new JTextField();
         this.campoDescripcion = new JTextField();
         this.campoIdProducto = new JTextField();
-        
+
         this.tablaResultados = new JTable();
-        this.modeloTabla = new DefaultTableModel();
-        
+
+        //Hay que sobreeescribir el método isCellEditable para que devuelva false
+        this.modeloTabla = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; //de esta manera no se pueden editar las celdas
+            }
+        };
+
         this.consulta = new ProductoDAO();
-        
+
     }
-    
+
     public void crearEntorno() {
         //Creo la ventana
         ventana.setSize(1000, 800);
@@ -81,25 +90,25 @@ public class InterfazVisual {
         // --- ELEMENTOS DEL NORTH ---
         JLabel etiquetaPrincipal = new JLabel("Registro de inventario", JLabel.CENTER);
         etiquetaPrincipal.setFont(new Font("Arial", Font.BOLD, 24));
-        
+
         panelEtiqueta.add(etiquetaPrincipal);
         // -------------------------------
 
         // --- ELEMENTOS DEL CENTER ---
         this.panelDatos.setLayout(new GridLayout(4, 2));
-        
+
         JLabel etiquetaNombre = new JLabel("Nombre del producto");
         this.panelDatos.add(etiquetaNombre);
         this.panelDatos.add(this.campoNombre);
-        
+
         JLabel etiquetaCantidad = new JLabel("Cantidad");
         this.panelDatos.add(etiquetaCantidad);
         this.panelDatos.add(this.campoCantidad);
-        
+
         JLabel etiquetaPrecio = new JLabel("Precio");
         this.panelDatos.add(etiquetaPrecio);
         this.panelDatos.add(this.campoPrecio);
-        
+
         JLabel etiquetaDescripcion = new JLabel("Descripción");
         this.panelDatos.add(etiquetaDescripcion);
         this.panelDatos.add(this.campoDescripcion);
@@ -107,7 +116,7 @@ public class InterfazVisual {
 
         // --- ELEMENTOS DEL SOUTH ---
         this.panelTabla.setLayout(new BorderLayout());
-        
+
         this.panelBotones.setLayout(new FlowLayout());
         this.panelBotones.add(this.botonRegistrar);
         this.panelBotones.add(this.botonActualizar);
@@ -120,9 +129,9 @@ public class InterfazVisual {
         this.modeloTabla.addColumn("Cantidad");
         this.modeloTabla.addColumn("Precio");
         this.modeloTabla.addColumn("Descripción");
-        
+
         this.tablaResultados.setModel(this.modeloTabla);
-        
+
         this.panelTabla.add(this.panelBotones, BorderLayout.NORTH);
         this.panelTabla.add(new JScrollPane(this.tablaResultados), BorderLayout.CENTER);
 
@@ -136,9 +145,18 @@ public class InterfazVisual {
         agregarValidador(this.campoPrecio);
 
         //Botones
-        //Para agregar la información a la BBDD
+        //Para agregar registrar los productos
         agregarInsertarDatos(this.botonRegistrar);
+        //Para vaciar los campos
         agregarVaciadoCampos(this.botonLimpiar);
+        //Para actualizar producto
+        agregarActualizarDatos(this.botonActualizar);
+        //Para borrar el producto
+        agregarBorrarDatos(this.botonBorrar);
+
+        //Tabla
+        //Para seleccionar cada fila de la tabla
+        agregarEventoTabla(this.tablaResultados);
 
         //-----------------
         // agrego elementos y hago visible la ventana
@@ -146,7 +164,7 @@ public class InterfazVisual {
         this.ventana.add(this.panelDatos, BorderLayout.CENTER);
         this.ventana.add(this.panelTabla, BorderLayout.SOUTH);
         this.ventana.setVisible(true);
-        
+
     }
 
     //Metodo para validar que los campos estén llenos
@@ -175,17 +193,16 @@ public class InterfazVisual {
             JOptionPane.showMessageDialog(ventana, "Debes agregar una descripción");
             return false;
         }
-        
+
         return true;
     }
-    
+
     //Metodo para agregar la limpieza de campos al boton
-    private void agregarVaciadoCampos(JButton botonLimpiar){
+    private void agregarVaciadoCampos(JButton botonLimpiar) {
         botonLimpiar.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 vaciarCampos();
-                mostrarDatos();
             }
         });
     }
@@ -193,11 +210,12 @@ public class InterfazVisual {
     //Metodo para vaciar los campos
     private void vaciarCampos() {
         this.campoNombre.setText("");
-        this.campoCantidad.setBackground(Color.WHITE);        
+        this.campoCantidad.setBackground(Color.WHITE);
         this.campoCantidad.setText("");
-        this.campoPrecio.setBackground(Color.WHITE);        
+        this.campoPrecio.setBackground(Color.WHITE);
         this.campoPrecio.setText("");
         this.campoDescripcion.setText("");
+        this.campoIdProducto.setText("");
     }
 
     //Metodo para agregar la insercion de datos al boton
@@ -212,16 +230,17 @@ public class InterfazVisual {
 
     //Metodo para hacer una insercion de datos (INSERT)
     private void insertarDatos() {
-        
+
+        //validamos que los campos no estén vacíos
         if (!validacionCampos()) {
             return;
         }
-        
+
         String nombre = this.campoNombre.getText();
         int cantidad = Integer.parseInt(this.campoCantidad.getText());
         double precio = Double.parseDouble(this.campoPrecio.getText());
         String descripcion = this.campoDescripcion.getText();
-        
+
         if (this.consulta.registrarProducto(nombre, cantidad, precio, descripcion)) {
             JOptionPane.showMessageDialog(ventana, "Producto agregado con éxito");
             mostrarDatos();
@@ -229,17 +248,120 @@ public class InterfazVisual {
         } else {
             JOptionPane.showMessageDialog(ventana, "Error al agregar el producto");
         }
-        
+
     }
-    
+
+    //Metodo para agregar el evento a la tabla
+    private void agregarEventoTabla(JTable tablaResultado) {
+        tablaResultado.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                enviarDatosTablaAcampo(tablaResultado); //Agrego la tabla que quiero cambiar por si hay más en el futuro
+            }
+        });
+
+    }
+
+    //Metodo para enviar los datos de la fila a los campos
+    private void enviarDatosTablaAcampo(JTable tablaResultado) {
+
+        //Al hacer click se obtiene el índice de la fila
+        int filaSeleccionada = tablaResultado.getSelectedRow();
+
+        //Si la fila es una fila real (no es -1)
+        if (filaSeleccionada != -1) {
+
+            //Vamos a extraer el contenido de cada fila con el número de fila y columna para ponerlo en los campos
+            campoIdProducto.setText(modeloTabla.getValueAt(filaSeleccionada, 0).toString());
+            campoNombre.setText(modeloTabla.getValueAt(filaSeleccionada, 1).toString());
+            campoCantidad.setText(modeloTabla.getValueAt(filaSeleccionada, 2).toString());
+            campoPrecio.setText(modeloTabla.getValueAt(filaSeleccionada, 3).toString());
+            campoDescripcion.setText(modeloTabla.getValueAt(filaSeleccionada, 4).toString());
+        }
+    }
+
+    //Metodo para agregar actualizacion de datos
+    private void agregarActualizarDatos(JButton botonActualizar) {
+        botonActualizar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                actualizarDatos();
+            }
+
+        });
+
+    }
+
     //Metodo para hacer una actualizacion de datos (UPDATE)
-    private void actualizarDatos(){
-    //Aquí va la lógica para actualizar los datos
+    private void actualizarDatos() {
+        //Validamos que los campos no estén en blanco una vez seleccionados
+        if (!validacionCampos()) {
+            return;
+        }
+        
+        if(this.campoIdProducto.getText().isEmpty()){
+            //Para verificar que el usuario seleccionó un producto a cambiar
+            JOptionPane.showMessageDialog(ventana, "Debes elegir un producto");
+            return;
+        }
+
+        //Parseamos los datos como en la inserción, incluyendo el campo ID
+        int id = Integer.parseInt(this.campoIdProducto.getText());
+        String nombre = this.campoNombre.getText();
+        int cantidad = Integer.parseInt(this.campoCantidad.getText());
+        double precio = Double.parseDouble(this.campoPrecio.getText());
+        String descripcion = this.campoDescripcion.getText();
+
+        //Enviamos los datos a la clase DAO
+        if (this.consulta.actualizarProducto(nombre, cantidad, precio, descripcion, id)) {
+            JOptionPane.showMessageDialog(ventana, "Producto actualizado con éxito.");
+            mostrarDatos(); // Refrescamos la tabla
+            vaciarCampos(); // Limpiamos los campos (y el ID)        
+        } else {
+            JOptionPane.showMessageDialog(ventana, "Error al actualizar el producto.");
+        }
+
     }
     
+    //Metodo para agregarBorrarDatos al boton
+    private void agregarBorrarDatos(JButton botonEliminar){
+        botonEliminar.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               borrarDatos();
+            }
+        });
+    }
+
     //Metodo para borrar datos (DELETE)
-    private void borrarDatos(){
-    //Aquí va la lógica para borrar los datos
+    private void borrarDatos() {
+        if(this.campoIdProducto.getText().isEmpty()){
+        //Para verificar que el usuario seleccionó un producto a cambiar
+        JOptionPane.showMessageDialog(ventana, "Debes elegir un producto");
+        return;
+        }
+        
+        //Se debe pedir confirmación al usuario antes de borrar
+        int confirmacion = JOptionPane.showConfirmDialog(ventana,
+                "¿Estás seguro de que deseas eliminar el producto?",
+                "Confirmar eliminación",
+                JOptionPane.YES_NO_OPTION);
+        
+        //Si el usuario confirma (YES_OPTION)
+        if(confirmacion == JOptionPane.YES_OPTION){
+            //Parseamos el ID para enviarlo a la BBDD
+            int id = Integer.parseInt(this.campoIdProducto.getText());
+            
+            //Se envía la orden para borrar al DAO
+            if(this.consulta.borrarProducto(id)){
+                JOptionPane.showMessageDialog(ventana, "Producto eliminado correctamente");
+                mostrarDatos(); //Refrescamos la tabla para que desaparezca
+                vaciarCampos(); //limpiamos los campos
+            } else{
+                JOptionPane.showMessageDialog(ventana, "Error al borrar el producto.");
+            }
+        }
+        
     }
 
     //Metodo para agregar el validador de teclado al JButton
@@ -251,7 +373,7 @@ public class InterfazVisual {
             }
         });
     }
-    
+
     //Metodo para validar que el caracter introducido sea un numero
     private void validarNumero(JTextField idNumerico, KeyEvent e) {
         //Se toma el caracter ingresado por teclado
