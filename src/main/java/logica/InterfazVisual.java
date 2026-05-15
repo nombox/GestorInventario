@@ -235,6 +235,13 @@ public class InterfazVisual {
         if (!validacionCampos()) {
             return;
         }
+        
+        //Validamos que no se trate de agregar un producto que ya existe
+        if(!this.campoIdProducto.getText().isEmpty()){
+            //Para verificar que el usuario seleccionó un producto a cambiar
+            JOptionPane.showMessageDialog(ventana, "No puedes agregar un producto existente");
+            return;
+        }
 
         String nombre = this.campoNombre.getText();
         int cantidad = Integer.parseInt(this.campoCantidad.getText());
